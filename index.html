@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abhishek & Nikita | 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --pink-main: #ff85a2;
+            --pink-light: #ffdae0;
+            --pink-dark: #f06292;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+        }
+
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            margin: 0; 
+            min-height: 100vh;
+            background: url('https://cdn.discordapp.com/attachments/1479240247215657082/1479240347887341800/Screenshot_20260306_033545_Instagram.jpg?ex=69ab516d&is=69a9ffed&hm=ec372a6747b75b46725a688e30fd9cd5b71f51f461e928e2c0aa2a79491ecd39&') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Lock Screen */
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(255, 218, 224, 0.7), rgba(255, 218, 224, 0.7)), 
+                        url('https://cdn.discordapp.com/attachments/1479240247215657082/1479240347489009744/Screenshot_20260306_033632_Instagram.jpg?ex=69ab516d&is=69a9ffed&hm=50d6e489079374f46272103a3d470bb2b8694e79128c0c72fc0095406c5ea81b&');
+            background-size: cover;
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+        }
+        .login-card { 
+            background: var(--glass-bg); padding: 40px; border-radius: 30px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        /* App Layout */
+        #main-content { display: none; flex-direction: column; align-items: center; padding: 20px; }
+        
+        h1 { 
+            font-family: 'Dancing Script', cursive; color: white; 
+            font-size: 3.5rem; text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            margin: 20px 0;
+        }
+
+        .container { width: 100%; max-width: 550px; }
+        
+        .date-card {
+            background: var(--glass-bg); border-radius: 20px; padding: 20px; margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 2px solid transparent;
+            backdrop-filter: blur(10px);
+        }
+        .completed { border-color: var(--pink-main); background: rgba(255, 252, 253, 0.95); }
+
+        /* Inputs */
+        .show-pass-label { font-size: 0.8rem; color: #666; cursor: pointer; display: block; margin-top: 10px; }
+        input[type="text"], input[type="date"], textarea {
+            border: 1px solid var(--pink-light); border-radius: 10px; padding: 12px;
+            background: rgba(255,255,255,0.9); font-family: inherit;
+        }
+        
+        .media-item { width: 100%; border-radius: 15px; margin-top: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* Admin Section */
+        #admin-panel {
+            background: rgba(0, 0, 0, 0.8); color: white; width: 100%; max-width: 550px;
+            padding: 25px; border-radius: 25px; margin: 40px 0; text-align: center;
+        }
+        .pdf-btn {
+            background: #555; color: white; padding: 15px 30px; border-radius: 30px;
+            border: none; font-weight: bold; cursor: not-allowed; transition: 0.4s;
+        }
+        .pdf-btn.unlocked { background: var(--pink-dark); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="lock-screen">
+        <div class="login-card">
+            <h2 style="font-family: 'Dancing Script'; color: var(--pink-dark); font-size: 2.5rem;">Abhishek & Nikita</h2>
+       
+            <input type="password" id="pass-input" placeholder="••••••" style="padding:12px; border-radius:10px; border:1px solid var(--pink-light); text-align:center; font-size: 1.2rem; width: 80%;">
+            
+            <label class="show-pass-label">
+                <input type="checkbox" onclick="togglePass('pass-input')"> Show Password
+            </label>
+
+            <button onclick="checkPassword()" style="margin-top:20px; background:var(--pink-main); color:white; border:none; padding:12px 30px; border-radius:15px; cursor:pointer; font-weight:bold; width: 80%;">Open Journal</button>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <h1>Our Journey</h1>
+        
+        <div class="container" id="cards-container"></div>
+
+        <div id="admin-panel">
+            <h3>Memory Tracker</h3>
+            <p id="progress-text">0 of 26 Dates Lived ❤️</p>
+            <button id="pdf-btn" class="pdf-btn" onclick="downloadPDF()" disabled>Locked: Complete A to Z to Save Journal</button>
+        </div>
+    </div>
+
+    <script>
+        const SECRET_HASH = "221e275d97e7827e151e9c661406dde91c89c9f42a0ea53adc6c137438b6ebbe";
+
+        function togglePass(id) {
+            const x = document.getElementById(id);
+            x.type = x.type === "password" ? "text" : "password";
+        }
+
+        async function checkPassword() {
+            const input = document.getElementById('pass-input').value;
+            const msgBuffer = new TextEncoder().encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            if (hashedInput === SECRET_HASH) {
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+                renderList();
+            } else {
+                alert("That's not it, love! Try again.");
+            }
+        }
+
+        function renderList() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            const container = document.getElementById('cards-container');
+            container.innerHTML = "";
+            let doneCount = 0;
+
+            letters.forEach(l => {
+                const data = JSON.parse(localStorage.getItem('journal-26-' + l)) || {};
+                if(data.done) doneCount++;
+
+                const card = document.createElement('div');
+                card.className = `date-card ${data.done ? 'completed' : ''}`;
+                card.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <span style="background:var(--pink-dark); color:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:1.2rem;">${l}</span>
+                        <input type="text" placeholder="What is our ${l} date?" value="${data.idea || ''}" oninput="update('${l}', 'idea', this.value)" style="flex:1; border:none; border-bottom:1px solid var(--pink-light); outline:none; background:transparent; font-weight:600;">
+                        <input type="checkbox" style="width:25px; height:25px; accent-color:var(--pink-dark);" ${data.done ? 'checked' : ''} onchange="update('${l}', 'done', this.checked)">
+                    </div>
+                    <div style="margin-top:15px; display: flex; flex-direction: column; gap: 10px;">
+                        <input type="date" value="${data.date || ''}" onchange="update('${l}', 'date', this.value)">
+                        <input type="text" placeholder="Image/Video links (link1, link2...)" value="${data.links || ''}" oninput="update('${l}', 'links', this.value)">
+                        <div id="media-${l}"></div>
+                        <textarea placeholder="Write a note about this memory..." oninput="update('${l}', 'note', this.value)">${data.note || ''}</textarea>
+                    </div>
+                `;
+                container.appendChild(card);
+                showMedia(l, data.links);
+            });
+            updateProgress(doneCount);
+        }
+
+        function update(l, key, value) {
+            let data = JSON.parse(localStorage.getItem('journal-26-' + l)) || {};
+            data[key] = value;
+            localStorage.setItem('journal-26-' + l, JSON.stringify(data));
+            if(key === 'links') showMedia(l, value);
+            if(key === 'done') renderList();
+        }
+
+        function showMedia(l, links) {
+            const div = document.getElementById('media-' + l);
+            if(!div) return;
+            div.innerHTML = "";
+            if(!links) return;
+            links.split(',').forEach(link => {
+                const url = link.trim();
+                if(!url) return;
+                if(url.match(/\.(mp4|webm|mov)/i)) {
+                    div.innerHTML += `<video src="${url}" class="media-item" controls></video>`;
+                } else {
+                    div.innerHTML += `<img src="${url}" class="media-item">`;
+                }
+            });
+        }
+
+        function updateProgress(count) {
+            document.getElementById('progress-text').innerText = `${count} of 26 Dates Lived ❤️`;
+            const btn = document.getElementById('pdf-btn');
+            if(count === 26) {
+                btn.innerText = "✨ Download Our 2026 Story (PDF) ✨";
+                btn.classList.add('unlocked');
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('main-content');
+            const opt = {
+                margin: 0.2,
+                filename: 'Abhishek_Nikita_2026.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
