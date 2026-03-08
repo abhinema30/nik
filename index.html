@@ -3,33 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abhishek & Nikita | Cloud Journal</title>
+    <title>Abhishek & Nikita | 2026 Journal</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root { --pink: #ff85a2; --pink-dark: #f06292; --glass: rgba(255, 255, 255, 0.9); }
+        
+        /* BACKGROUNDS USING LOCAL IMG FOLDER */
         body { 
             font-family: 'Quicksand', sans-serif; margin: 0; min-height: 100vh;
-            background: url('https://cdn.discordapp.com/attachments/1479240247215657082/1479240347887341800/Screenshot_20260306_033545_Instagram.jpg?ex=69ab516d&is=69a9ffed&hm=ec372a6747b75b46725a688e30fd9cd5b71f51f461e928e2c0aa2a79491ecd39&') no-repeat center center fixed;
+            background: url('img/bg_main.jpg') no-repeat center center fixed;
             background-size: cover;
         }
+
         #lock-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://cdn.discordapp.com/attachments/1479240247215657082/1479240347489009744/Screenshot_20260306_033632_Instagram.jpg?ex=69ab516d&is=69a9ffed&hm=50d6e489079374f46272103a3d470bb2b8694e79128c0c72fc0095406c5ea81b&');
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('img/bg_login.jpg');
             background-size: cover; display: flex; align-items: center; justify-content: center; z-index: 10000;
         }
-        .login-card { background: var(--glass); padding: 40px; border-radius: 30px; text-align: center; width: 300px; backdrop-filter: blur(10px); }
+
+        .login-card { background: var(--glass); padding: 40px; border-radius: 30px; text-align: center; width: 300px; backdrop-filter: blur(5px); }
         #main-content { display: none; flex-direction: column; align-items: center; padding: 20px; }
-        .date-card { background: var(--glass); border-radius: 20px; padding: 20px; margin-bottom: 25px; width: 100%; max-width: 500px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); transition: 0.3s; }
-        .completed { border-left: 10px solid var(--pink-dark); background: #fff9fa; }
-        .media-item { width: 100%; border-radius: 15px; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit; }
-        .sync-badge { background: rgba(0,0,0,0.7); color: white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 20px; }
-        .pdf-btn { background: #555; color: white; padding: 15px 30px; border-radius: 30px; border: none; font-weight: bold; cursor: not-allowed; transition: 0.3s; width: 100%; }
+        .date-card { background: var(--glass); border-radius: 25px; padding: 20px; margin-bottom: 25px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-left: 8px solid transparent; transition: 0.3s; }
+        .completed { border-left-color: var(--pink-dark); background: #fffaff; }
+        
+        .media-container { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .media-item { width: 100%; border-radius: 15px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .upload-btn { display: inline-block; background: var(--pink); color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: bold; margin-top: 10px; }
+        .prog-bar { font-size: 0.7rem; color: var(--pink-dark); margin-top: 5px; font-weight: bold; }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-family: inherit; }
+        .sync-badge { background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 25px; font-size: 0.85rem; margin-bottom: 20px; }
+        .pdf-btn { background: #555; color: white; padding: 15px 40px; border-radius: 35px; border: none; font-weight: bold; width: 100%; cursor: not-allowed; }
         .unlocked { background: var(--pink-dark) !important; cursor: pointer !important; }
     </style>
 </head>
@@ -37,29 +48,26 @@
 
     <div id="lock-screen">
         <div class="login-card">
-            <h2 style="font-family: 'Dancing Script'; color: var(--pink-dark); font-size: 2.5rem;">Our Journal</h2>
-            <input type="password" id="pass-input" placeholder="Secret Password">
-            <label style="font-size: 0.8rem; color: #666; cursor: pointer; display: block; margin-top: 5px;">
-                <input type="checkbox" onclick="togglePass()"> Show Password
-            </label>
-            <button onclick="checkPassword()" style="background: var(--pink-dark); color: white; border: none; padding: 12px 40px; border-radius: 15px; cursor: pointer; margin-top: 20px; font-weight: bold; width: 100%;">Enter</button>
+            <h2 style="font-family: 'Dancing Script'; color: var(--pink-dark); font-size: 2.5rem;">Abhishek & Nikita</h2>
+            <input type="password" id="pass-input" placeholder="Password" style="text-align:center;">
+            <button onclick="checkPassword()" style="background:var(--pink-dark); color:white; border:none; padding:12px 40px; border-radius:15px; cursor:pointer; font-weight:bold; width:100%; margin-top:10px;">Login</button>
         </div>
     </div>
 
     <div id="main-content">
-        <h1 style="font-family: 'Dancing Script'; color: white; text-shadow: 2px 2px 15px rgba(0,0,0,1); font-size: 3.5rem; margin-bottom: 5px;">Abhishek & Nikita</h1>
-        <div class="sync-badge" id="sync-status">☁️ Connecting to Cloud...</div>
+        <h1 style="font-family: 'Dancing Script'; color: white; text-shadow: 2px 2px 15px rgba(0,0,0,0.8); font-size: 3.5rem;">Our 2026 Journey</h1>
+        <div class="sync-badge" id="sync-status">☁️ Syncing Memories...</div>
         
         <div id="cards-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
-        
-        <div style="background: rgba(0,0,0,0.8); padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 50px; width: 100%; max-width: 500px; color: white;">
-            <p id="progress-text" style="font-weight: bold; margin-bottom: 15px;">0 / 26 Completed</p>
+
+        <div style="background: rgba(0,0,0,0.85); padding: 30px; border-radius: 25px; text-align: center; margin-bottom: 50px; width: 100%; max-width: 500px; color: white;">
+            <p id="progress-text">0 / 26 Dates Completed ❤️</p>
             <button id="pdf-btn" class="pdf-btn" onclick="downloadPDF()" disabled>Locked: Complete A to Z</button>
         </div>
     </div>
 
     <script>
-        // --- PASTE YOUR FIREBASE CONFIG HERE ---
+        // PASTE YOUR FIREBASE CONFIG HERE
 		const firebaseConfig = {
 		  apiKey: "AIzaSyDts_9i1QJ2GTSm7uRps8cceJ2IrPCIwNU",
 		  authDomain: "abhishek-nikita-journal.firebaseapp.com",
@@ -70,44 +78,35 @@
 		  appId: "1:351891714447:web:ac05392a26162005629bfa",
 		  measurementId: "G-PD70DXJ1SM"
 		};
-        // ---------------------------------------
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
-        function togglePass() {
-            const x = document.getElementById("pass-input");
-            x.type = x.type === "password" ? "text" : "password";
-        }
+        const storage = firebase.storage();
 
         async function checkPassword() {
-            const input = document.getElementById('pass-input').value;
             const HASH = "221e275d97e7827e151e9c661406dde91c89c9f42a0ea53adc6c137438b6ebbe";
+            const input = document.getElementById('pass-input').value;
             const msgBuffer = new TextEncoder().encode(input);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            const hashedInput = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
             if (hashedInput === HASH) {
                 document.getElementById('lock-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'flex';
                 loadData();
-            } else { alert("Incorrect Password"); }
+            } else { alert("Try again, love!"); }
         }
 
         function loadData() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
             const container = document.getElementById('cards-container');
             
-            // Listen for data AND the last update timestamp
             db.ref('/').on('value', (snapshot) => {
-                const rootData = snapshot.val() || {};
-                const cloudData = rootData.dates || {};
-                const lastUpdate = rootData.lastSync || null;
-                
-                if(lastUpdate) {
-                    const timeStr = new Date(lastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    document.getElementById('sync-status').innerText = `☁️ Last update: Today at ${timeStr}`;
+                const root = snapshot.val() || {};
+                const cloudData = root.dates || {};
+                if(root.lastSync) {
+                    const time = new Date(root.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('sync-status').innerText = `☁️ Last update: Today at ${time}`;
                 }
 
                 container.innerHTML = "";
@@ -121,28 +120,59 @@
                     card.innerHTML = `
                         <div style="display:flex; align-items:center; gap:15px;">
                             <span style="background:var(--pink-dark); color:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">${l}</span>
-                            <input type="text" placeholder="Date Idea..." value="${data.idea || ''}" onchange="updateCloud('${l}', 'idea', this.value)" style="flex:1; border:none; border-bottom:1px solid #ddd; outline:none; background:transparent;">
-                            <input type="checkbox" style="width:25px; height:25px; accent-color:var(--pink-dark);" ${data.done ? 'checked' : ''} onchange="updateCloud('${l}', 'done', this.checked)">
+                            <input type="text" placeholder="Idea..." value="${data.idea || ''}" onchange="updateCloud('${l}', 'idea', this.value)" style="flex:1; border:none; border-bottom:1px solid #ddd; background:transparent; font-weight:bold;">
+                            <input type="checkbox" style="width:25px; height:25px;" ${data.done ? 'checked' : ''} onchange="updateCloud('${l}', 'done', this.checked)">
                         </div>
                         <input type="date" value="${data.date || ''}" onchange="updateCloud('${l}', 'date', this.value)">
-                        <input type="text" placeholder="Links (comma separated)" value="${data.links || ''}" onchange="updateCloud('${l}', 'links', this.value)">
-                        <div id="media-${l}"></div>
-                        <textarea placeholder="Tell our story..." onchange="updateCloud('${l}', 'note', this.value)">${data.note || ''}</textarea>
+                        
+                        <div style="text-align:center;">
+                            <label class="upload-btn" for="file-${l}">📸 Upload Photo</label>
+                            <input type="file" id="file-${l}" style="display:none" onchange="uploadToFolder('${l}', this.files[0])">
+                            <div id="prog-${l}" class="prog-bar"></div>
+                        </div>
+
+                        <div id="media-${l}" class="media-container"></div>
+                        <textarea placeholder="Write our story..." onchange="updateCloud('${l}', 'note', this.value)">${data.note || ''}</textarea>
                     `;
                     container.appendChild(card);
                     renderMedia(l, data.links);
                 });
                 
-                document.getElementById('progress-text').innerText = `${count} / 26 Dates Lived ❤️`;
+                document.getElementById('progress-text').innerText = `${count} / 26 Completed ❤️`;
                 const btn = document.getElementById('pdf-btn');
                 if(count === 26) { btn.classList.add('unlocked'); btn.disabled = false; btn.innerText = "Download Memory PDF"; }
             });
         }
 
+        // UPLOADS DIRECTLY TO "memories/" FOLDER IN CLOUD
+        function uploadToFolder(l, file) {
+            if (!file) return;
+            const progDiv = document.getElementById(`prog-${l}`);
+            const storageRef = storage.ref(`memories/${l}/${Date.now()}_${file.name}`);
+            const uploadTask = storageRef.put(file);
+
+            uploadTask.on('state_changed', 
+                (snap) => {
+                    const progress = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                    progDiv.innerText = `Sending to Cloud Folder: ${progress}%`;
+                }, 
+                (err) => { alert("Upload error!"); }, 
+                () => {
+                    uploadTask.snapshot.ref.getDownloadURL().then((url) => {
+                        progDiv.innerText = "✅ Saved!";
+                        db.ref(`dates/${l}/links`).once('value').then(snap => {
+                            let current = snap.val() || "";
+                            let updated = current ? current + "," + url : url;
+                            updateCloud(l, 'links', updated);
+                        });
+                    });
+                }
+            );
+        }
+
         function updateCloud(l, key, value) { 
-            // Update the specific date AND the global timestamp
             const updates = {};
-            updates['/dates/' + l + '/' + key] = value;
+            updates[`/dates/${l}/${key}`] = value;
             updates['/lastSync'] = firebase.database.ServerValue.TIMESTAMP;
             db.ref().update(updates);
         }
@@ -150,10 +180,8 @@
         function renderMedia(l, links) {
             const div = document.getElementById('media-' + l);
             if(!div || !links) return;
-            links.split(',').forEach(link => {
-                const url = link.trim();
-                if(!url) return;
-                if(url.match(/\.(mp4|webm|mov)/i)) {
+            links.split(',').forEach(url => {
+                if(url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
                     div.innerHTML += `<video src="${url}" class="media-item" controls></video>`;
                 } else {
                     div.innerHTML += `<img src="${url}" class="media-item">`;
@@ -162,13 +190,7 @@
         }
 
         function downloadPDF() {
-            const element = document.getElementById('main-content');
-            html2pdf().set({ 
-                margin: 0.5, 
-                filename: 'Abhishek_Nikita_2026.pdf', 
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-            }).from(element).save();
+            html2pdf().from(document.getElementById('main-content')).save('Abhishek_Nikita_2026.pdf');
         }
     </script>
 </body>
